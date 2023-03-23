@@ -44,7 +44,9 @@ template <> void CallResultListener<CreateItemResult_t>::Result(CreateItemResult
         lua_setfield(L, -2, "userNeedsToAcceptWorkshopLegalAgreement");
     }
     lua_pushboolean(L, io_fail);
-    lua_call(L, 2, 0);
+    //lua_call(L, 2, 0);
+    if(lua_pcall(L, 2, 0, 0)) 
+        lua_pop(L, 1);
     delete this; // DELET THIS
 }
 
@@ -64,7 +66,9 @@ template <> void CallResultListener<SubmitItemUpdateResult_t>::Result(SubmitItem
         lua_setfield(L, -2, "userNeedsToAcceptWorkshopLegalAgreement");
     }
     lua_pushboolean(L, io_fail);
-    lua_call(L, 2, 0);
+    //lua_call(L, 2, 0);
+    if(lua_pcall(L, 2, 0, 0)) 
+        lua_pop(L, 1);
     delete this;
 }
 
@@ -82,7 +86,9 @@ static void SimpleResultListener(int callback_ref, int result, bool io_fail) {
         lua_setfield(L, -2, "result");
     }
     lua_pushboolean(L, io_fail);
-    lua_call(L, 2, 0);
+    //lua_call(L, 2, 0);
+    if(lua_pcall(L, 2, 0, 0)) 
+        lua_pop(L, 1);
 }
 
 template <> void CallResultListener<StartPlaytimeTrackingResult_t>::Result(StartPlaytimeTrackingResult_t *data, bool io_fail) {
@@ -111,7 +117,9 @@ template <> void CallResultListener<RemoteStorageSubscribePublishedFileResult_t>
         lua_setfield(L, -2, "publishedFileId");
     }
     lua_pushboolean(L, io_fail);
-    lua_call(L, 2, 0);
+    //lua_call(L, 2, 0);
+    if(lua_pcall(L, 2, 0, 0)) 
+        lua_pop(L, 1);
     delete this;
 }
 
@@ -131,7 +139,9 @@ template <> void CallResultListener<RemoteStorageUnsubscribePublishedFileResult_
         lua_setfield(L, -2, "publishedFileId");
     }
     lua_pushboolean(L, io_fail);
-    lua_call(L, 2, 0);
+    //lua_call(L, 2, 0);
+    if(lua_pcall(L, 2, 0, 0)) 
+        lua_pop(L, 1);
     delete this;
 }
 

@@ -44,7 +44,9 @@ void CallbackListener::OnUserStatsReceived(UserStatsReceived_t *data) {
         lua_setfield(L, -2, "result");
         luasteam::pushuint64(L, data->m_steamIDUser.ConvertToUint64());
         lua_setfield(L, -2, "steamIDUser");
-        lua_call(L, 1, 0);
+        //lua_call(L, 1, 0);
+        if(lua_pcall(L, 1, 0, 0)) 
+            lua_pop(L, 1);
         lua_pop(L, 1);
     }
 }
@@ -67,7 +69,9 @@ void CallbackListener::OnUserStatsStored(UserStatsStored_t *data) {
         lua_setfield(L, -2, "gameID");
         lua_pushnumber(L, static_cast<int>(data->m_eResult));
         lua_setfield(L, -2, "result");
-        lua_call(L, 1, 0);
+        //lua_call(L, 1, 0);
+        if(lua_pcall(L, 1, 0, 0)) 
+            lua_pop(L, 1);
         lua_pop(L, 1);
     }
 }
@@ -94,7 +98,9 @@ void CallbackListener::OnUserAchievementStored(UserAchievementStored_t *data) {
         lua_setfield(L, -2, "curProgress");
         lua_pushnumber(L, data->m_nMaxProgress);
         lua_setfield(L, -2, "maxProgress");
-        lua_call(L, 1, 0);
+        //lua_call(L, 1, 0);
+        if(lua_pcall(L, 1, 0, 0)) 
+            lua_pop(L, 1);
         lua_pop(L, 1);
     }
 }
@@ -119,7 +125,9 @@ template <> void CallResultListener<LeaderboardFindResult_t>::Result(Leaderboard
         lua_setfield(L, -2, "leaderboardFound");
     }
     lua_pushboolean(L, io_fail);
-    lua_call(L, 2, 0);
+    //lua_call(L, 2, 0);
+    if(lua_pcall(L, 2, 0, 0)) 
+        lua_pop(L, 1);
     delete this; // DELET THIS
 }
 
@@ -147,7 +155,9 @@ template <> void CallResultListener<LeaderboardScoreUploaded_t>::Result(Leaderbo
         lua_setfield(L, -2, "globalRankPrevious");
     }
     lua_pushboolean(L, io_fail);
-    lua_call(L, 2, 0);
+    //lua_call(L, 2, 0);
+    if(lua_pcall(L, 2, 0, 0)) 
+        lua_pop(L, 1);
     delete this;
 }
 
@@ -186,7 +196,9 @@ template <> void CallResultListener<LeaderboardScoresDownloaded_t>::Result(Leade
         }
     }
     lua_pushboolean(L, io_fail);
-    lua_call(L, 2, 0);
+    //lua_call(L, 2, 0);
+    if(lua_pcall(L, 2, 0, 0)) 
+        lua_pop(L, 1);
     delete this;
 }
 
@@ -390,7 +402,7 @@ EXTERN int luasteam_downloadLeaderboardEntries(lua_State *L) {
 namespace luasteam {
 
 void add_user_stats(lua_State *L) {
-    lua_createtable(L, 0, 13);
+    lua_createtable(L, 0, 17);
     add_func(L, "getStatInt", luasteam_getStatInt);
     add_func(L, "getStatFloat", luasteam_getStatFloat);
     add_func(L, "setStatInt", luasteam_setStatInt);

@@ -6,6 +6,12 @@
 #include "utils.hpp"
 #include "apps.hpp"
 #include "input.hpp"
+#include "matchmaking.hpp"
+#include "networking.hpp"
+#include "windows.h"
+#include <stdlib.h>
+#include <iostream>
+#include <string>
 
 // ========================
 // ======= SteamAPI =======
@@ -17,6 +23,8 @@ EXTERN int luasteam_init(lua_State *L) {
     if (success) {
         luasteam::init_common(L);
         luasteam::init_friends(L);
+        luasteam::init_matchmaking(L);
+        luasteam::init_networking(L);
         luasteam::init_user_stats(L);
         luasteam::init_utils(L);
         luasteam::init_UGC(L);
@@ -42,6 +50,25 @@ EXTERN int luasteam_shutdown(lua_State *L) {
     luasteam::shutdown_user_stats(L);
     luasteam::shutdown_friends(L);
     luasteam::shutdown_common(L);
+    luasteam::shutdown_matchmaking(L);
+    luasteam::shutdown_networking(L);
+    return 0;
+}
+
+EXTERN int luasteam_restartAppIfNecessary(lua_State *L) {
+    SteamAPI_RestartAppIfNecessary(luaL_checknumber(L, 1));
+    return 0;
+}
+
+EXTERN int luasteam_setAppID(lua_State *L) {
+    //SetEnvironmentVariable "SteamAppId" to luaL_checknumber(L, 1)
+    char num_char[255 + sizeof(char)];
+    int num = luaL_checknumber(L, 1);
+    std::sprintf(num_char, "%d", num);
+    SetEnvironmentVariable("SteamAppId", num_char);
+    SetEnvironmentVariable("SteamGameId", num_char);
+
+    SteamAPI_SetBreakpadAppID(num);
     return 0;
 }
 
@@ -57,6 +84,15 @@ void add_core(lua_State *L) {
     add_func(L, "init", luasteam_init);
     add_func(L, "shutdown", luasteam_shutdown);
     add_func(L, "runCallbacks", luasteam_runCallbacks);
+    add_func(L, "restartAppIfNecessary", luasteam_restartAppIfNecessary);
+    add_func(L, "setAppID", luasteam_setAppID);
+
+    lua_newuserdata(L, 0);
+    lua_newtable(L);
+    lua_pushcclosure(L, luasteam_shutdown, 0);
+    lua_setfield(L, -2, "__gc");
+    lua_setmetatable(L, -2);
+    lua_setfield(L, LUA_REGISTRYINDEX, "luasteam_shutdown");
 }
 
 } // namespace luasteam

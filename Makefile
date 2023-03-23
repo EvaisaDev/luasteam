@@ -6,11 +6,11 @@ CPP_FLAGS=-Wno-invalid-offsetof -Wall
 
 THIRD_PARTY=./third-party
 
-OSX_OUT=luasteam.so
+OSX_OUT=out/luasteam.so
 OSX_IPATHS=-I$(THIRD_PARTY)/include/
 OSX_FLAGS=$(OSX_IPATHS) $(STDLIB_VER)
 
-GNU_OUT=luasteam.so
+GNU_OUT=out/luasteam.so
 GNU_IPATHS=-I/usr/include/luajit-2.0
 GNU_FLAGS=$(GNU_IPATHS) $(STDLIB_VER) -lluajit-5.1
 
@@ -35,7 +35,7 @@ ifeq ($(OS),Windows_NT)
 SHELL=cmd
 WINDOWS_IPATHS=-I./cache/include
 WINDOWS_OPT=-LD -EHsc -Feluasteam
-VARSALL="C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\vcvarsall.bat"
+VARSALL="C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Auxiliary\Build\vcvarsall.bat"
 
 luajit.zip:
 	curl -sL -o luajit.zip http://luajit.org/download/LuaJIT-2.0.5.zip
@@ -60,7 +60,7 @@ cache/win64_lua51.lib:
 
 windows32:
 	if not exist cache\win32_lua51.lib $(MAKE) cache/win32_lua51.lib
-	call $(VARSALL) x86 && cl $(SRC) cache/win32_lua51.lib ${STEAM_LIB}/steam_api.lib $(WINDOWS_OPT) $(WINDOWS_IPATHS)
+	call $(VARSALL) x86 && cl $(SRC) cache/win32_lua51.lib user32.lib ${STEAM_LIB}/steam_api.lib $(WINDOWS_OPT) $(WINDOWS_IPATHS)
 
 windows64:
 	if not exist cache\win64_lua51.lib $(MAKE) cache/win64_lua51.lib

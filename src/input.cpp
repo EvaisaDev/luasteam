@@ -207,9 +207,11 @@ EXTERN int luasteam_getGamepadIndexForController(lua_State *L) {
 // const char * GetGlyphForActionOrigin( EInputActionOrigin eOrigin );
 EXTERN int luasteam_getGlyphForActionOrigin(lua_State *L) {
     EInputActionOrigin inputActionOrigin = static_cast<EInputActionOrigin>(luaL_checkoption(L, 1, nullptr, input_action_origins));
-    lua_pushstring(L, SteamInput()->GetGlyphForActionOrigin(inputActionOrigin));
+    lua_pushstring(L, SteamInput()->GetGlyphForActionOrigin_Legacy(inputActionOrigin));
     return 1;
 }
+
+
 
 // ESteamInputType GetInputTypeForHandle( InputHandle_t inputHandle );
 EXTERN int luasteam_getInputTypeForHandle(lua_State *L) {
@@ -290,7 +292,7 @@ EXTERN int luasteam_triggerHapticPulse(lua_State *L) {
     uint64 inputHandle = luasteam::checkuint64(L, 1);
     ESteamControllerPad eTargetPad = static_cast<ESteamControllerPad>(luaL_checkoption(L, 2, nullptr, steam_controller_pads));
     unsigned short usDurationMicroSec = luaL_checkint(L, 3);
-    SteamInput()->TriggerHapticPulse(inputHandle, eTargetPad, usDurationMicroSec);
+    SteamInput()->Legacy_TriggerHapticPulse(inputHandle, eTargetPad, usDurationMicroSec);
     return 0;
 }
 
@@ -301,7 +303,7 @@ EXTERN int luasteam_triggerRepeatedHapticPulse(lua_State *L) {
     unsigned short usDurationMicroSec = luaL_checkint(L, 3);
     unsigned short usOffMicroSec = luaL_checkint(L, 4);
     unsigned short unRepeat = luaL_checkint(L, 5);
-    SteamInput()->TriggerRepeatedHapticPulse(inputHandle, eTargetPad, usDurationMicroSec, usOffMicroSec, unRepeat, 0);
+    SteamInput()->Legacy_TriggerRepeatedHapticPulse(inputHandle, eTargetPad, usDurationMicroSec, usOffMicroSec, unRepeat, 0);
     return 0;
 }
 
@@ -354,7 +356,7 @@ EXTERN int luasteam_getRemotePlaySessionID(lua_State *L) {
 }
 
 EXTERN int luasteam_input_init(lua_State *L) {
-    bool success = SteamInput()->Init();
+    bool success = SteamInput()->Init(false);
     lua_pushboolean(L, success);
     return 1;
 }

@@ -12,6 +12,8 @@ EXTERN int luasteam_getSteamID(lua_State *L) {
     return 1;
 }
 
+
+
 namespace luasteam {
 
 void add_user(lua_State *L) {

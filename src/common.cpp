@@ -33,6 +33,14 @@ void pushuint64(lua_State *L, uint64 v) {
     lua_setmetatable(L, -2);
 }
 
+bool steam_id_valid(CSteamID id){
+	if (id == k_steamIDNil || id.ConvertToUint64() == 0) {
+		return false;
+	}else{
+		return id.IsValid();
+	}
+}
+
 uint64 checkuint64(lua_State *L, int nParam) {
     luaL_argcheck(L, lua_isuserdata(L, nParam), nParam, "must be userdata");
     lua_rawgeti(L, LUA_REGISTRYINDEX, uint64Metatable_ref);
