@@ -178,17 +178,93 @@ EXTERN int luasteam_getClipboard(lua_State *L){
 }
 
 
+EXTERN int luasteam_getUnixTimeStamp(lua_State *L){
 
+    // Get current system time in UTC
+    FILETIME ft;
+    GetSystemTimeAsFileTime(&ft);
+
+    // Convert UTC system time to Unix timestamp
+    ULARGE_INTEGER ull;
+    ull.LowPart = ft.dwLowDateTime;
+    ull.HighPart = ft.dwHighDateTime;
+    ULONGLONG ft64 = ull.QuadPart;
+    time_t unix_time = (ft64 - 116444736000000000ULL) / 10000000;
+
+    // Get current system time in milliseconds
+    ULONGLONG system_time_ms = ft64 / 10000;
+
+    // Subtract Unix timestamp from system time in milliseconds to get milliseconds since Unix epoch
+    ULONGLONG unix_time_ms = system_time_ms - (11644473600000ULL);
+
+    // convert to uint64_t
+    uint64_t unix_time_ms_64 = unix_time_ms;
+
+    luasteam::pushuint64(L, unix_time_ms_64);
+
+    return 1;
+}
+
+EXTERN int luasteam_uintToString(lua_State *L){
+    uint64_t number = luasteam::checkuint64(L, 1);
+
+    std::string str = std::to_string(number);
+
+    lua_pushstring(L, str.c_str());
+
+    return 1;
+}
+
+EXTERN int luasteam_stringToUint(lua_State *L){
+    const char *str = luaL_checkstring(L, 1);
+
+    uint64_t number = std::stoull(str);
+
+    luasteam::pushuint64(L, number);
+
+    return 1;
+}
+
+EXTERN int luasteam_getUnixTimeElapsed(lua_State *L){
+    uint64_t time1 = luasteam::checkuint64(L, 1);
+    uint64_t time2 = luasteam::checkuint64(L, 2);
+
+    // return time elapsed as a 32 bit integer
+    lua_pushinteger(L, time2 - time1);
+
+    return 1;
+}
+
+const char *keyboard_modes[] = {"SingleLine", "MultipleLines", "Email", "Numeric", nullptr};
+
+//bool ShowFloatingGamepadTextInput( EFloatingGamepadTextInputMode eKeyboardMode, int nTextFieldXPosition, int nTextFieldYPosition, int nTextFieldWidth, int nTextFieldHeight );
+EXTERN int luasteam_showFloatingGamepadTextInput(lua_State *L){
+    //static_cast<EFloatingGamepadTextInputMode>(luaL_checkoption(L, 1, nullptr, keyboard_modes))
+    SteamUtils()->ShowFloatingGamepadTextInput(static_cast<EFloatingGamepadTextInputMode>(luaL_checkoption(L, 1, nullptr, keyboard_modes)), luaL_checkinteger(L, 2), luaL_checkinteger(L, 3), luaL_checkinteger(L, 4), luaL_checkinteger(L, 5));
+
+    return 0;
+}
+
+EXTERN int luasteam_loggedOn(lua_State *L){
+    lua_pushboolean(L, SteamUser()->BLoggedOn());
+    return 1;
+}
 
 namespace luasteam {
 
 void add_utils(lua_State *L) {
-    lua_createtable(L, 0, 1);
+    lua_createtable(L, 0, 11);
     add_func(L, "getAppID", luasteam_getAppID);
     add_func(L, "compressSteamID", luasteam_compressSteamID);
     add_func(L, "decompressSteamID", luasteam_decompressSteamID);
     add_func(L, "setClipboard", luasteam_setClipboard);
     add_func(L, "getClipboard", luasteam_getClipboard);
+    add_func(L, "getUnixTimeStamp", luasteam_getUnixTimeStamp);
+    add_func(L, "getUnixTimeElapsed", luasteam_getUnixTimeElapsed);
+    add_func(L, "uintToString", luasteam_uintToString);
+    add_func(L, "stringToUint", luasteam_stringToUint);
+    add_func(L, "showFloatingGamepadTextInput", luasteam_showFloatingGamepadTextInput);
+    add_func(L, "loggedOn", luasteam_loggedOn);
     lua_setfield(L, -2, "utils");
 }
 

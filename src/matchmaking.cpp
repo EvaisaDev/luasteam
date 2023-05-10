@@ -153,7 +153,7 @@ void CallbackListener::OnLobbyChatMsgReceived(LobbyChatMsg_t *data) {
         if (lua_pcall(L, 1, 0, -3))
             lua_pop(L, 1); // Pop error string
         
-        lua_pop(L, 1);
+        lua_pop(L, 2);
     }
 }
 
@@ -220,25 +220,22 @@ const char *lobby_distance_filters[] = {"Close", "Default", "Far", "Worldwide", 
 } // namespace
 
 namespace luasteam {
-    template <> void CallResultListener<LobbyCreated_t>::Result(LobbyCreated_t *data, bool io_fail) {
-        lua_State *L = luasteam::global_lua_state;
+    template <> void CallResultListener<LobbyCreated_t>::Result(LobbyCreated_t* data, bool io_fail) {
 
-        // getting stored lobby type
+        lua_State* L = luasteam::global_lua_state;
+
         lua_rawgeti(L, LUA_REGISTRYINDEX, callback_ref2);
         luaL_unref(L, LUA_REGISTRYINDEX, callback_ref2);
+        
 
-        const char *lobby_type = lua_tostring(L, -1);
+        const char* lobby_type = lua_tostring(L, -1);
         SteamMatchmaking()->SetLobbyData(data->m_ulSteamIDLobby, "LobbyType", lobby_type);
-        SteamMatchmaking()->SetLobbyData(data->m_ulSteamIDLobby, "NewSystem", "True");
+        SteamMatchmaking()->SetLobbyData(data->m_ulSteamIDLobby, "System", "NoitaOnline");
 
-        // getting stored callback function
         lua_rawgeti(L, LUA_REGISTRYINDEX, callback_ref);
         luaL_unref(L, LUA_REGISTRYINDEX, callback_ref);
+       
 
-
-        //
-        
-        // calling function
         if (io_fail) {
             lua_pushnil(L);
         } else {
@@ -249,11 +246,12 @@ namespace luasteam {
             lua_setfield(L, -2, "lobby");
         }
         lua_pushboolean(L, io_fail);
-        //lua_call(L, 2, 0);
         if(lua_pcall(L, 2, 0, 0)) 
             lua_pop(L, 1);
 
-        delete this; // DELET THIS
+        lua_pop(L, 1);
+        // Release resources
+        delete this;
     }
 
     template <> void CallResultListener<LobbyEnter_t>::Result(LobbyEnter_t *data, bool io_fail) {
@@ -432,24 +430,56 @@ EXTERN int luasteam_setLobbyType(lua_State *L) {
 }
 
 EXTERN int luasteam_getLobbyData(lua_State *L) {
-    const char *key = luaL_checkstring(L, 2);
+    uint64_t lobbyID = luasteam::checkuint64(L, 1);
+    const char* key = luaL_checkstring(L, 2);
 
-    const char *value = SteamMatchmaking()->GetLobbyData(luasteam::checkuint64(L, 1), key);
+    const char* value = SteamMatchmaking()->GetLobbyData(lobbyID, key);
     if (value[0] == '\0') {
+        // Get the error message and add a traceback
+
+        /*const char* errorMsg = "[LuaSteam] Failed to get lobby data";
+        lua_pushstring(L, errorMsg);
+        luaL_traceback(L, L, NULL, 1);
+        const char* traceback = lua_tostring(L, -1);*/
+
+        // Call print with the error message and traceback
+
+        /*
+        lua_getglobal(L, "print");
+        lua_pushfstring(L, "%s\n%s", errorMsg, traceback);
+        lua_call(L, 1, 0);
+        */
+
+        // return nil
         lua_pushnil(L);
     } else {
         lua_pushstring(L, value);
-    }	
+    }
+
     return 1;
 }
 
 EXTERN int luasteam_setLobbyData(lua_State *L) {
+    uint64_t lobbyID = luasteam::checkuint64(L, 1);
+    const char* key = luaL_checkstring(L, 2);
+    const char* value = luaL_checkstring(L, 3);
 
-    bool success = SteamMatchmaking()->SetLobbyData(luasteam::checkuint64(L, 1), luaL_checkstring(L, 2), luaL_checkstring(L, 3));
+    bool success = SteamMatchmaking()->SetLobbyData(lobbyID, key, value);
+
+    if (!success) {
+        // Get the error message and add a traceback
+        const char* errorMsg = "[LuaSteam] Failed to set lobby data";
+        lua_pushstring(L, errorMsg);
+        luaL_traceback(L, L, NULL, 1);
+        const char* traceback = lua_tostring(L, -1);
+
+        // Call print with the error message and traceback
+        lua_getglobal(L, "print");
+        lua_pushfstring(L, "%s\n%s", errorMsg, traceback);
+        lua_call(L, 1, 0);
+    }
 
     lua_pushboolean(L, success);
-
-
     return 1;
 }
 
@@ -457,7 +487,7 @@ EXTERN int luasteam_setLobbyMemberData(lua_State *L) {
     const char *key = luaL_checkstring(L, 2);
     const char *value = luaL_checkstring(L, 3);
     SteamMatchmaking()->SetLobbyMemberData(luasteam::checkuint64(L, 1), key, value);
-    return 1;
+    return 0;
 }
 
 EXTERN int luasteam_getLobbyMemberData(lua_State *L) {
@@ -471,12 +501,12 @@ EXTERN int luasteam_addRequestLobbyListStringFilter(lua_State *L) {
     const char *value = luaL_checkstring(L, 2);
     ELobbyComparison comparison = static_cast<ELobbyComparison>(luaL_checkoption(L, 3, nullptr, lobby_comparisons));
     SteamMatchmaking()->AddRequestLobbyListStringFilter(key, value, comparison);
-    return 1;
+    return 0;
 }
 
 EXTERN int luasteam_addRequestLobbyListResultCountFilter( lua_State *L ) {
     SteamMatchmaking()->AddRequestLobbyListResultCountFilter( luaL_checkint( L, 1 ) );
-    return 1;
+    return 0;
 }
 
 EXTERN int luasteam_deleteLobbyData(lua_State *L) {
@@ -490,20 +520,23 @@ EXTERN int luasteam_getLobbyDataCount(lua_State *L) {
 }
 
 EXTERN int luasteam_getLobbyDataByIndex(lua_State *L) {
-    // bool GetLobbyDataByIndex( CSteamID steamIDLobby, int iLobbyData, char *pchKey, int cchKeyBufferSize, char *pchValue, int cchValueBufferSize );
-    char *key = new char[255];
-    char *value = new char[255];
+    char pvKey[255];
+    char pvValue[8192];
 
-    SteamMatchmaking()->GetLobbyDataByIndex(luasteam::checkuint64(L, 1), luaL_checkint(L, 2), key, 255, value, 255);  
+    bool success = SteamMatchmaking()->GetLobbyDataByIndex(luasteam::checkuint64(L, 1), luaL_checkint(L, 2), pvKey, 255, pvValue, 8192);  
+    
+    if (!success) {
+        lua_pushnil(L);
+        return 1;
+    }
 
     // add key and value to a table and send to lua
     lua_newtable(L);
-    lua_pushstring(L, key);
+    lua_pushstring(L, pvKey);
     lua_setfield(L, -2, "key");
-    lua_pushstring(L, value);
+    lua_pushstring(L, pvValue);
     lua_setfield(L, -2, "value");
     
-
     return 1;
 }
 
@@ -530,33 +563,38 @@ EXTERN int luasteam_kickUserFromLobby(lua_State *L) {
     // send the string to the server
     lua_pushboolean(L, SteamMatchmaking()->SendLobbyChatMsg(lobby, kick_string.c_str(), kick_string.length() + 1));
 
-    return 0;
+    return 1;
 }
 
 EXTERN int luasteam_getLobbyChatEntry(lua_State *L) {
-    // int GetLobbyChatEntry( CSteamID steamIDLobby, int iChatID, CSteamID *pSteamIDUser, void *pvData, int cubData, EChatEntryType *peChatEntryType );
+    char pvData[255];
 
-    char *pvData = new char[255];
+    int bytes = SteamMatchmaking()->GetLobbyChatEntry(luasteam::checkuint64(L, 1), luaL_checkint(L, 2), NULL, pvData, 255, NULL);
 
-    int result = SteamMatchmaking()->GetLobbyChatEntry(luasteam::checkuint64(L, 1), luaL_checkint(L, 2), NULL, &pvData, 255, NULL);
-    
-    // Add results to table and send to lua
+    // add result to a table and send to lua
     lua_newtable(L);
     lua_pushstring(L, pvData);
     lua_setfield(L, -2, "data");
 
-    return 0;
+
+    return 1;
 }
 
 EXTERN int luasteam_addRequestLobbyListDistanceFilter(lua_State *L) {
     SteamMatchmaking()->AddRequestLobbyListDistanceFilter(static_cast<ELobbyDistanceFilter>(luaL_checkoption(L, 1, nullptr, lobby_distance_filters)));
-    return 1;
+    return 0;
+}
+
+EXTERN int luasteam_addRequestLobbyListFilterSlotsAvailable(lua_State *L) {
+    SteamMatchmaking()->AddRequestLobbyListFilterSlotsAvailable(luaL_checkint(L, 1));
+    return 0;
 }
 
 EXTERN int luasteam_requestLobbyData(lua_State *L) {
     lua_pushboolean(L, SteamMatchmaking()->RequestLobbyData(luasteam::checkuint64(L, 1)));
     return 1;
 }
+
 
 namespace luasteam {
 

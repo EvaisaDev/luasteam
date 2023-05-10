@@ -76,7 +76,7 @@ void CallbackListener::OnSteamNetworkingMessagesSessionRequest(SteamNetworkingMe
 		luasteam::pushuint64(L, data->m_identityRemote.GetSteamID().ConvertToUint64());
 		lua_pcall(L, 1, 0, 0);
 	}
-	lua_pop(L, 2);
+	lua_pop(L, 1);
 }
 
 // SteamNetworkingMessagesSessionFailed_t
@@ -110,7 +110,7 @@ void CallbackListener::OnSteamNetworkingMessagesSessionFailed(SteamNetworkingMes
 		// pcall
 		lua_pcall(L, 4, 0, 0);
 	}
-	lua_pop(L, 2);
+	lua_pop(L, 1);
 }
 
 
@@ -172,11 +172,6 @@ EXTERN int luasteam_getsteamid(lua_State *L) {
 }
 */
 
-// Write a wrapper for SendMessageToUser
-// EResult SendMessageToUser( const SteamNetworkingIdentity &identityRemote, const void *pubData, uint32 cubData, int nSendFlags, int nRemoteChannel );
-// make it so you only have to give a steam_id and the message
-// return EResult
-
 EXTERN int luasteam_sendstring(lua_State *L) {
 	CSteamID user = luasteam::checkuint64(L, 1);
 	if(luasteam::steam_id_valid(user)){
@@ -188,10 +183,30 @@ EXTERN int luasteam_sendstring(lua_State *L) {
 		luasteam::pushuint64(L, result);
 		// push message size
 		lua_pushinteger(L, len);
+		return 2;
 	}else{
 		luasteam::pushuint64(L, k_EResultInvalidSteamID);
+		return 1;
 	}
-	return 2;
+}
+
+
+EXTERN int luasteam_sendstringunreliable(lua_State *L) {
+	CSteamID user = luasteam::checkuint64(L, 1);
+	if(luasteam::steam_id_valid(user)){
+		size_t len;
+		const char *data = luaL_checklstring(L, 2, &len);
+		SteamNetworkingIdentity identity;
+		identity.SetSteamID(user);
+		EResult result = SteamNetworkingMessages()->SendMessageToUser(identity, data, len, k_nSteamNetworkingSend_UnreliableNoDelay, 0);
+		luasteam::pushuint64(L, result);
+		// push message size
+		lua_pushinteger(L, len);
+		return 2;
+	}else{
+		luasteam::pushuint64(L, k_EResultInvalidSteamID);
+		return 1;
+	}
 }
 
 // Write a wrapper for AcceptSessionWithUser
@@ -231,8 +246,8 @@ EXTERN int luasteam_closesession(lua_State *L) {
 // It should be in the following format {{data = [message], user = [steamid]}}
 // When you're done with the message object(s), make sure and call SteamNetworkingMessage_t::Release!
 EXTERN int luasteam_pollMessages(lua_State *L) {
-    SteamNetworkingMessage_t *messages[10];
-    int num = SteamNetworkingMessages()->ReceiveMessagesOnChannel(0, messages, 10);
+    SteamNetworkingMessage_t *messages[512];
+    int num = SteamNetworkingMessages()->ReceiveMessagesOnChannel(0, messages, 512);
     lua_createtable(L, num, 0);
     for (int i = 0; i < num; i++) {
         lua_createtable(L, 0, 3);
@@ -310,13 +325,14 @@ EXTERN int luasteam_getConnectionInfo(lua_State *L) {
 namespace luasteam {
 
 void add_networking(lua_State *L) {
-    lua_createtable(L, 0, 4);
+    lua_createtable(L, 0, 6);
 	add_func(L, "acceptSession", luasteam_acceptsession);
 	add_func(L, "closeSession", luasteam_closesession);
 	add_func(L, "pollMessages", luasteam_pollMessages);
 	//add_func(L, "getIdentity", luasteam_get_identity);
 	//add_func(L, "getSteamID", luasteam_getsteamid);
 	add_func(L, "sendString", luasteam_sendstring);
+	add_func(L, "sendStringUnreliable", luasteam_sendstringunreliable);
 	add_func(L, "getConnectionInfo", luasteam_getConnectionInfo);
 
     lua_pushvalue(L, -1);
@@ -326,7 +342,7 @@ void add_networking(lua_State *L) {
 
 void init_networking(lua_State *L) { 
 	// InitRelayNetworkAccess();
-	//SteamNetworkingUtils()->InitRelayNetworkAccess();
+	SteamNetworkingUtils()->InitRelayNetworkAccess();
 
 	// SetConfigValue
 	// k_ESteamNetworkingConfig_IP_AllowWithoutAuth

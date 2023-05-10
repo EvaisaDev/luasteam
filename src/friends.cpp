@@ -70,6 +70,11 @@ EXTERN int luasteam_getPersonaName(lua_State *L) {
     return 1;
 }
 
+EXTERN int luasteam_getPersonaState(lua_State *L) {
+    lua_pushnumber(L, SteamFriends()->GetPersonaState());
+    return 1;
+}
+
 // bool SetRichPresence( const char *pchKey, const char *pchValue );
 EXTERN int luasteam_setRichPresence(lua_State *L) {
     const char *key = luaL_checkstring(L, 1);
@@ -127,6 +132,7 @@ void add_friends(lua_State *L) {
     add_func(L, "activateGameOverlayToWebPage", luasteam_activateGameOverlayToWebPage);
     add_func(L, "getFriendPersonaName", luasteam_getFriendPersonaName);
     add_func(L, "getPersonaName", luasteam_getPersonaName);
+    add_func(L, "getPersonaState", luasteam_getPersonaState);
     add_func(L, "setRichPresence", luasteam_setRichPresence);
     add_func(L, "getFriendCount", luasteam_getFriendCount);
     add_func(L, "getFriendByIndex", luasteam_getFriendByIndex);
