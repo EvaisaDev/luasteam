@@ -60,7 +60,7 @@ cache/win64_lua51.lib:
 
 windows32:
 	if not exist cache\win32_lua51.lib $(MAKE) cache/win32_lua51.lib
-	call $(VARSALL) x86 && cl $(SRC) cache/win32_lua51.lib user32.lib ${STEAM_LIB}/steam_api.lib $(WINDOWS_OPT) $(WINDOWS_IPATHS)
+	call $(VARSALL) x86 && cl $(SRC) cache/win32_lua51.lib user32.lib ${STEAM_LIB}/steam_api.lib $(WINDOWS_OPT) $(WINDOWS_IPATHS) /O2 /Ox /Z7 /DEBUG
 
 windows64:
 	if not exist cache\win64_lua51.lib $(MAKE) cache/win64_lua51.lib

@@ -202,7 +202,7 @@ void CallbackListener::OnLobbyChatUpdate(LobbyChatUpdate_t *data) {
         lua_setfield(L, -2, "lobbyID");
         luasteam::pushuint64(L, data->m_ulSteamIDUserChanged);
         lua_setfield(L, -2, "userChanged");
-        luasteam::pushuint64(L, data->m_ulSteamIDUserChanged);
+        luasteam::pushuint64(L, data->m_ulSteamIDMakingChange);
         lua_setfield(L, -2, "userMakingChange");
         lua_pushnumber(L, data->m_rgfChatMemberStateChange);
         lua_setfield(L, -2, "chatMemberStateChange");

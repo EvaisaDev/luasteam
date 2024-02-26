@@ -177,6 +177,57 @@ EXTERN int luasteam_getClipboard(lua_State *L){
     return 1;
 }
 
+// bool ISteamUtls->GetImageSize( int iImage, uint32 *pnWidth, uint32 *pnHeight );
+EXTERN int luasteam_getImageSize(lua_State* L) {
+    int image = luaL_checkint(L, 1);
+    uint32 width, height;
+    bool result = SteamUtils()->GetImageSize(image, &width, &height);
+    if(!result) {
+        return 0;
+    }
+    lua_pushinteger(L, width);
+    lua_pushinteger(L, height);
+    return 2;
+}
+
+// bool ISteamUtils->GetImageRGBA( int iImage, uint8 *pubDest, int nDestBufferSize );
+// return as a table of RGBA integers for each pixel, with rows
+EXTERN int luasteam_getImage(lua_State *L){
+    int image = luaL_checkint(L, 1);
+    uint32 width, height;
+    bool result = SteamUtils()->GetImageSize(image, &width, &height);
+    if(!result) {
+        return 0;
+    }
+
+    uint8 *pubDest = new uint8[width * height * 4];
+    result = SteamUtils()->GetImageRGBA(image, pubDest, width * height * 4);
+    if(!result) {
+        delete[] pubDest;
+        return 0;
+    }
+
+    lua_createtable(L, width * height, 0);
+    for(uint32 y = 0; y < height; y++) {
+        for(uint32 x = 0; x < width; x++) {
+            uint32 r = pubDest[(y * width + x) * 4];
+            uint32 g = pubDest[(y * width + x) * 4 + 1];
+            uint32 b = pubDest[(y * width + x) * 4 + 2];
+            uint32 a = pubDest[(y * width + x) * 4 + 3];
+
+            uint32 pixel = r << 0
+                | g << 8
+                | b << 16
+                | a << 24;
+
+            lua_pushinteger(L, pixel);
+            lua_rawseti(L, -2, (y * width + x) + 1); // The +1 is necessary because Lua indices start at 1
+        }
+    }
+    delete[] pubDest;
+    return 1;
+}
+
 
 EXTERN int luasteam_getUnixTimeStamp(lua_State *L){
 
@@ -245,11 +296,6 @@ EXTERN int luasteam_showFloatingGamepadTextInput(lua_State *L){
     return 0;
 }
 
-EXTERN int luasteam_loggedOn(lua_State *L){
-    lua_pushboolean(L, SteamUser()->BLoggedOn());
-    return 1;
-}
-
 namespace luasteam {
 
 void add_utils(lua_State *L) {
@@ -264,7 +310,8 @@ void add_utils(lua_State *L) {
     add_func(L, "uintToString", luasteam_uintToString);
     add_func(L, "stringToUint", luasteam_stringToUint);
     add_func(L, "showFloatingGamepadTextInput", luasteam_showFloatingGamepadTextInput);
-    add_func(L, "loggedOn", luasteam_loggedOn);
+    add_func(L, "getImageSize", luasteam_getImageSize);
+    add_func(L, "getImageData", luasteam_getImage);
     lua_setfield(L, -2, "utils");
 }
 

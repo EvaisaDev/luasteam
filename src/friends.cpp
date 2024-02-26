@@ -75,6 +75,48 @@ EXTERN int luasteam_getPersonaState(lua_State *L) {
     return 1;
 }
 
+EXTERN int luasteam_getSmallFriendAvatar(lua_State *L) {
+    CSteamID id(luasteam::checkuint64(L, 1));
+    int handle = SteamFriends()->GetSmallFriendAvatar(id);
+    if (handle == 0) {
+        lua_pushnil(L);
+    } else {
+        lua_pushnumber(L, handle);
+    }
+    return 1;
+}
+
+EXTERN int luasteam_getMediumFriendAvatar(lua_State *L) {
+    CSteamID id(luasteam::checkuint64(L, 1));
+    int size = luaL_checkint(L, 2);
+    int handle = SteamFriends()->GetMediumFriendAvatar(id);
+    if (handle == 0) {
+        lua_pushnil(L);
+    } else {
+        lua_pushnumber(L, handle);
+    }
+    return 1;
+}
+
+EXTERN int luasteam_getLargeFriendAvatar(lua_State *L) {
+    CSteamID id(luasteam::checkuint64(L, 1));
+    int handle = SteamFriends()->GetLargeFriendAvatar(id);
+    if (handle == 0) {
+        lua_pushnil(L);
+    } else {
+        lua_pushnumber(L, handle);
+    }
+    return 1;
+}
+
+EXTERN int luasteam_requestUserInformation(lua_State *L) {
+    CSteamID id(luasteam::checkuint64(L, 1));
+    bool name_only = lua_toboolean(L, 2);
+    bool success = SteamFriends()->RequestUserInformation(id, name_only);
+    lua_pushboolean(L, success);
+    return 1;
+}
+
 // bool SetRichPresence( const char *pchKey, const char *pchValue );
 EXTERN int luasteam_setRichPresence(lua_State *L) {
     const char *key = luaL_checkstring(L, 1);
@@ -96,7 +138,14 @@ EXTERN int luasteam_getFriendByIndex(lua_State *L) {
     const int index = luaL_checkint(L, 1);
     const int flags = luaL_checkint(L, 2);
 
-    luasteam::pushuint64(L, SteamFriends()->GetFriendByIndex(index, flags).ConvertToUint64());
+    //luasteam::pushuint64(L, SteamFriends()->GetFriendByIndex(index, flags).ConvertToUint64());
+    // check if k_steamIDNil
+    CSteamID id = SteamFriends()->GetFriendByIndex(index, flags);
+    if (id == k_steamIDNil) {
+        lua_pushnil(L);
+    } else {
+        luasteam::pushuint64(L, id.ConvertToUint64());
+    }
     return 1;
 }
 
@@ -127,7 +176,7 @@ EXTERN int luasteam_getFriendGamePlayed(lua_State *L) {
 namespace luasteam {
 
 void add_friends(lua_State *L) {
-    lua_createtable(L, 0, 7);
+    lua_createtable(L, 0, 14);
     add_func(L, "activateGameOverlay", luasteam_activateGameOverlay);
     add_func(L, "activateGameOverlayToWebPage", luasteam_activateGameOverlayToWebPage);
     add_func(L, "getFriendPersonaName", luasteam_getFriendPersonaName);
@@ -138,6 +187,10 @@ void add_friends(lua_State *L) {
     add_func(L, "getFriendByIndex", luasteam_getFriendByIndex);
     add_func(L, "getFriendPersonaState", luasteam_getFriendPersonaState);
     add_func(L, "getFriendGamePlayed", luasteam_getFriendGamePlayed);
+    add_func(L, "getMediumFriendAvatar", luasteam_getMediumFriendAvatar);
+    add_func(L, "getLargeFriendAvatar", luasteam_getLargeFriendAvatar);
+    add_func(L, "requestUserInformation", luasteam_requestUserInformation);
+    add_func(L, "getSmallFriendAvatar", luasteam_getSmallFriendAvatar);
     lua_pushvalue(L, -1);
     friends_ref = luaL_ref(L, LUA_REGISTRYINDEX);
     lua_setfield(L, -2, "friends");
