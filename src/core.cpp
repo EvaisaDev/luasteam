@@ -1,3 +1,4 @@
+#define USE_BREAKPAD_HANDLER
 #include "core.hpp"
 #include "UGC.hpp"
 #include "extra.hpp"
@@ -12,6 +13,7 @@
 #include <stdlib.h>
 #include <iostream>
 #include <string>
+
 
 // ========================
 // ======= SteamAPI =======
