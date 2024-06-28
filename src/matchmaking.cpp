@@ -425,7 +425,14 @@ EXTERN int luasteam_setLobbyMemberLimit(lua_State *L) {
 }
 
 EXTERN int luasteam_setLobbyType(lua_State *L) {
-    lua_pushboolean(L, SteamMatchmaking()->SetLobbyType(luasteam::checkuint64(L, 1), static_cast<ELobbyType>(luaL_checkoption(L, 2, nullptr, lobby_types))));
+    bool result = SteamMatchmaking()->SetLobbyType(luasteam::checkuint64(L, 1), static_cast<ELobbyType>(luaL_checkoption(L, 2, nullptr, lobby_types)));
+
+    // update lobby data "LobbyType"
+    const char* lobbyType = lobby_types[luaL_checkoption(L, 2, nullptr, lobby_types)];
+    SteamMatchmaking()->SetLobbyData(luasteam::checkuint64(L, 1), "LobbyType", lobbyType);
+
+    lua_pushboolean(L, result);
+
     return 1;
 }
 

@@ -228,7 +228,6 @@ EXTERN int luasteam_getImage(lua_State *L){
     return 1;
 }
 
-
 EXTERN int luasteam_getUnixTimeStamp(lua_State *L){
 
     // Get current system time in UTC

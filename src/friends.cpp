@@ -45,7 +45,7 @@ void CallbackListener::OnGameOverlayActivated(GameOverlayActivated_t *data) {
 
 // void ActivateGameOverlay( const char *pchDialog );
 EXTERN int luasteam_activateGameOverlay(lua_State *L) {
-    const char *dialog = dialog_types[luaL_checkoption(L, 1, NULL, dialog_types)];
+    const char *dialog = luaL_checkstring(L, 1);
     SteamFriends()->ActivateGameOverlay(dialog);
     return 0;
 }
@@ -172,11 +172,17 @@ EXTERN int luasteam_getFriendGamePlayed(lua_State *L) {
     return 1;
 }
 
+EXTERN int luasteam_activateGameOverlayInviteDialog(lua_State *L) {
+    CSteamID id(luasteam::checkuint64(L, 1));
+    SteamFriends()->ActivateGameOverlayInviteDialog(id);
+    return 0;
+}
+
 
 namespace luasteam {
 
 void add_friends(lua_State *L) {
-    lua_createtable(L, 0, 14);
+    lua_createtable(L, 0, 15);
     add_func(L, "activateGameOverlay", luasteam_activateGameOverlay);
     add_func(L, "activateGameOverlayToWebPage", luasteam_activateGameOverlayToWebPage);
     add_func(L, "getFriendPersonaName", luasteam_getFriendPersonaName);
@@ -191,6 +197,7 @@ void add_friends(lua_State *L) {
     add_func(L, "getLargeFriendAvatar", luasteam_getLargeFriendAvatar);
     add_func(L, "requestUserInformation", luasteam_requestUserInformation);
     add_func(L, "getSmallFriendAvatar", luasteam_getSmallFriendAvatar);
+    add_func(L, "activateGameOverlayInviteDialog", luasteam_activateGameOverlayInviteDialog);
     lua_pushvalue(L, -1);
     friends_ref = luaL_ref(L, LUA_REGISTRYINDEX);
     lua_setfield(L, -2, "friends");
