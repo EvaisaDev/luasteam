@@ -1,6 +1,7 @@
 #include "core.hpp"
 #include "UGC.hpp"
 #include "extra.hpp"
+#include "timeline.hpp"
 #include "friends.hpp"
 #include "user_stats.hpp"
 #include "utils.hpp"
@@ -29,6 +30,7 @@ EXTERN int luasteam_init(lua_State *L) {
         luasteam::init_utils(L);
         luasteam::init_UGC(L);
         luasteam::init_extra(L);
+        luasteam::init_timeline(L);
         luasteam::init_apps(L);
         luasteam::init_input(L);
     } else {
@@ -45,6 +47,7 @@ EXTERN int luasteam_shutdown(lua_State *L) {
     luasteam::shutdown_input(L);
     luasteam::shutdown_apps(L);
     luasteam::shutdown_extra(L);
+    luasteam::shutdown_timeline(L);
     luasteam::shutdown_UGC(L);
     luasteam::shutdown_utils(L);
     luasteam::shutdown_user_stats(L);
@@ -59,7 +62,7 @@ EXTERN int luasteam_restartAppIfNecessary(lua_State *L) {
     SteamAPI_RestartAppIfNecessary(luaL_checknumber(L, 1));
     return 0;
 }
-
+/*
 EXTERN int luasteam_setAppID(lua_State *L) {
     //SetEnvironmentVariable "SteamAppId" to luaL_checknumber(L, 1)
     char num_char[255 + sizeof(char)];
@@ -71,6 +74,7 @@ EXTERN int luasteam_setAppID(lua_State *L) {
     SteamAPI_SetBreakpadAppID(num);
     return 0;
 }
+*/
 
 // void SteamAPI_RunCallbacks();
 EXTERN int luasteam_runCallbacks(lua_State *L) {
@@ -85,7 +89,7 @@ void add_core(lua_State *L) {
     add_func(L, "shutdown", luasteam_shutdown);
     add_func(L, "runCallbacks", luasteam_runCallbacks);
     add_func(L, "restartAppIfNecessary", luasteam_restartAppIfNecessary);
-    add_func(L, "setAppID", luasteam_setAppID);
+    //add_func(L, "setAppID", luasteam_setAppID);
 
     lua_newuserdata(L, 0);
     lua_newtable(L);

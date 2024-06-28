@@ -2,6 +2,7 @@
 #include "common.hpp"
 #include "core.hpp"
 #include "extra.hpp"
+#include "timeline.hpp"
 #include "friends.hpp"
 #include "user.hpp"
 #include "user_stats.hpp"
@@ -23,6 +24,7 @@ EXTERN int luaopen_luasteam(lua_State *L) {
     luasteam::add_utils(L);
     luasteam::add_UGC(L);
     luasteam::add_extra(L);
+    luasteam::add_timeline(L);
     luasteam::add_apps(L);
     luasteam::add_input(L);
     return 1;
