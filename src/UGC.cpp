@@ -222,13 +222,15 @@ EXTERN int luasteam_getNumSubscribedItems(lua_State *L) {
 // uint32 GetSubscribedItems( PublishedFileId_t*pvecPublishedFileID, uint32 cMaxEntries );
 EXTERN int luasteam_getSubscribedItems(lua_State *L) {
     int sz = SteamUGC()->GetNumSubscribedItems();
-    std::vector<PublishedFileId_t> vec(sz);
+    std::vector<uint64> vec(sz);
     sz = SteamUGC()->GetSubscribedItems(vec.data(), sz);
+
     lua_createtable(L, sz, 0);
     for (int i = 0; i < sz; i++) {
         luasteam::pushuint64(L, vec[i]);
         lua_rawseti(L, -2, i + 1);
     }
+
     return 1;
 }
 
@@ -258,7 +260,7 @@ EXTERN int luasteam_getItemState(lua_State *L) {
 
 // bool GetItemInstallInfo( PublishedFileId_t nPublishedFileID, uint64 *punSizeOnDisk, char *pchFolder, uint32 cchFolderSize, uint32 *punTimeStamp );
 EXTERN int luasteam_getItemInstallInfo(lua_State *L) {
-    PublishedFileId_t id = luasteam::checkuint64(L, 1);
+    uint64 id = luasteam::checkuint64(L, 1);
     uint64 sizeOnDisk;
     const int size = 256;
     std::array<char, size> folder;

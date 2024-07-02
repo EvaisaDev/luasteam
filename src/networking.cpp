@@ -1,5 +1,5 @@
 #include "networking.hpp"
-
+#include <fstream>
 // ============================
 // ======= SteamNetworkingMessages =======
 // ============================
@@ -173,13 +173,22 @@ EXTERN int luasteam_getsteamid(lua_State *L) {
 */
 
 EXTERN int luasteam_sendstring(lua_State *L) {
+
 	CSteamID user = luasteam::checkuint64(L, 1);
 	if(luasteam::steam_id_valid(user)){
 		size_t len;
 		const char *data = luaL_checklstring(L, 2, &len);
 		SteamNetworkingIdentity identity;
 		identity.SetSteamID(user);
-		EResult result = SteamNetworkingMessages()->SendMessageToUser(identity, data, len, k_nSteamNetworkingSend_Reliable, 0);
+
+		// get channel if it is supplied
+		int channel = 0;
+		if(lua_gettop(L) > 2){
+			channel = luaL_checkinteger(L, 3);
+		}
+		channel = channel + 1;
+
+		EResult result = SteamNetworkingMessages()->SendMessageToUser(identity, data, len, k_nSteamNetworkingSend_Reliable|k_nSteamNetworkingSend_NoNagle, channel);
 		luasteam::pushuint64(L, result);
 		// push message size
 		lua_pushinteger(L, len);
@@ -198,7 +207,16 @@ EXTERN int luasteam_sendstringunreliable(lua_State *L) {
 		const char *data = luaL_checklstring(L, 2, &len);
 		SteamNetworkingIdentity identity;
 		identity.SetSteamID(user);
-		EResult result = SteamNetworkingMessages()->SendMessageToUser(identity, data, len, k_nSteamNetworkingSend_UnreliableNoDelay, 0);
+
+		// get channel if it is supplied
+		int channel = 0;
+		if(lua_gettop(L) > 2){
+			channel = luaL_checkinteger(L, 3);
+		}
+		channel = channel + 1;
+
+
+		EResult result = SteamNetworkingMessages()->SendMessageToUser(identity, data, len, k_nSteamNetworkingSend_UnreliableNoDelay, channel);
 		luasteam::pushuint64(L, result);
 		// push message size
 		lua_pushinteger(L, len);
@@ -207,7 +225,7 @@ EXTERN int luasteam_sendstringunreliable(lua_State *L) {
 		luasteam::pushuint64(L, k_EResultInvalidSteamID);
 		return 1;
 	}
-}
+}	
 
 // Write a wrapper for AcceptSessionWithUser
 // bool AcceptSessionWithUser( const SteamNetworkingIdentity &identityRemote );
@@ -239,15 +257,16 @@ EXTERN int luasteam_closesession(lua_State *L) {
 	return 1;
 }
 
-// Write a wrapper for ReceiveMessagesOnChannel
-// int ReceiveMessagesOnChannel( int nLocalChannel, SteamNetworkingMessage_t **ppOutMessages, int nMaxMessages );
-// don't take a channel input, channel is always 0
-// return messages in a table, limit to 10 messages
-// It should be in the following format {{data = [message], user = [steamid]}}
-// When you're done with the message object(s), make sure and call SteamNetworkingMessage_t::Release!
 EXTERN int luasteam_pollMessages(lua_State *L) {
     SteamNetworkingMessage_t *messages[512];
-    int num = SteamNetworkingMessages()->ReceiveMessagesOnChannel(0, messages, 512);
+
+	int channel = 0;
+	if(lua_gettop(L) > 0){
+		channel = luaL_checkinteger(L, 1);
+	}
+	channel = channel + 1;
+	
+    int num = SteamNetworkingMessages()->ReceiveMessagesOnChannel(channel, messages, 512);
     lua_createtable(L, num, 0);
     for (int i = 0; i < num; i++) {
         lua_createtable(L, 0, 3);
