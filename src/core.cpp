@@ -21,7 +21,7 @@
 
 // bool SteamAPI_Init();
 EXTERN int luasteam_init(lua_State *L) {
-    bool success = SteamAPI_Init();
+    bool success = SteamUser()->BLoggedOn();
     if (success) {
         luasteam::init_common(L);
         luasteam::init_friends(L);
@@ -88,13 +88,6 @@ void add_core(lua_State *L) {
     add_func(L, "runCallbacks", luasteam_runCallbacks);
     add_func(L, "restartAppIfNecessary", luasteam_restartAppIfNecessary);
     add_func(L, "setAppID", luasteam_setAppID);
-
-    lua_newuserdata(L, 0);
-    lua_newtable(L);
-    lua_pushcclosure(L, luasteam_shutdown, 0);
-    lua_setfield(L, -2, "__gc");
-    lua_setmetatable(L, -2);
-    lua_setfield(L, LUA_REGISTRYINDEX, "luasteam_shutdown");
 }
 
 } // namespace luasteam
